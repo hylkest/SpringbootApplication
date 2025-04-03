@@ -18,18 +18,38 @@ public class TaskController {
     private TaskRepository taskRepository;
 
     @GetMapping("/{id}")
-    public Task getTaskById(@PathVariable Long id) {
-        return taskRepository.findById(id).orElse(null);
+    public TaskResponse getTaskById(@PathVariable Long id) {
+        return taskRepository.findById(id).map(task ->
+                new TaskResponse(
+                        task.getId(),
+                        task.getTitle(),
+                        task.getDescription(),
+                        task.isCompleted(),
+                        task.getCreatedAt(),
+                        task.getDueDate()
+                )
+        ).orElse(null);
     }
 
+
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @RequestBody Task updatedTask) {
+    public TaskResponse updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequest request) {
         return taskRepository.findById(id).map(task -> {
-            task.setTitle(updatedTask.getTitle());
-            task.setDescription(updatedTask.getDescription());
-            task.setCompleted(updatedTask.isCompleted());
-            task.setDueDate(updatedTask.getDueDate());
-            return taskRepository.save(task);
+            task.setTitle(request.getTitle());
+            task.setDescription(request.getDescription());
+            task.setCompleted(request.isCompleted());
+            task.setDueDate(request.getDueDate());
+
+            Task updated = taskRepository.save(task);
+
+            return new TaskResponse(
+                    updated.getId(),
+                    updated.getTitle(),
+                    updated.getDescription(),
+                    updated.isCompleted(),
+                    updated.getCreatedAt(),
+                    updated.getDueDate()
+            );
         }).orElse(null);
     }
 
