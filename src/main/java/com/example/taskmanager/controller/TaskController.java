@@ -5,6 +5,8 @@ import com.example.taskmanager.repository.TaskRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.example.taskmanager.dto.TaskRequest;
+import com.example.taskmanager.dto.TaskResponse;
 
 import java.util.List;
 
@@ -14,16 +16,6 @@ public class TaskController {
 
     @Autowired
     private TaskRepository taskRepository;
-
-    @GetMapping
-    public List<Task> getAllTasks() {
-        return taskRepository.findAll();
-    }
-
-    @PostMapping
-    public Task createTask(@Valid @RequestBody Task task) {
-        return taskRepository.save(task);
-    }
 
     @GetMapping("/{id}")
     public Task getTaskById(@PathVariable Long id) {
@@ -44,5 +36,39 @@ public class TaskController {
     @DeleteMapping("/{id}")
     public void deleteTask(@PathVariable Long id) {
         taskRepository.deleteById(id);
+    }
+
+    @PostMapping
+    public TaskResponse createTask(@Valid @RequestBody TaskRequest request) {
+        Task task = new Task();
+        task.setTitle(request.getTitle());
+        task.setDescription(request.getDescription());
+        task.setCompleted(request.isCompleted());
+        task.setDueDate(request.getDueDate());
+
+        Task savedTask = taskRepository.save(task);
+
+        return new TaskResponse(
+                savedTask.getId(),
+                savedTask.getTitle(),
+                savedTask.getDescription(),
+                savedTask.isCompleted(),
+                savedTask.getCreatedAt(),
+                savedTask.getDueDate()
+        );
+    }
+
+    @GetMapping
+    public List<TaskResponse> getAllTasks() {
+        return taskRepository.findAll().stream().map(task ->
+                new TaskResponse(
+                        task.getId(),
+                        task.getTitle(),
+                        task.getDescription(),
+                        task.isCompleted(),
+                        task.getCreatedAt(),
+                        task.getDueDate()
+                )
+        ).toList();
     }
 }
